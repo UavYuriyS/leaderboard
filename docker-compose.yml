@@ -17,6 +17,52 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - leaderboard_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leaderboard_app
+    environment:
+      # Application settings
+      APP_VERSION: ${APP_VERSION:-0.1.0}
+      API_KEY: ${API_KEY:-your-secret-api-key-change-this}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-your-admin-api-key-change-this}
+      # Database settings
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: leaderboard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${BACKEND_PORT}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/version')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - leaderboard_network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 5 &&
+        echo 'Running database migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting application...' &&
+        uvicorn main:app --host 0.0.0.0 --port 8000
+      "
+
+networks:
+  leaderboard_network:
+    driver: bridge
 
 volumes:
   postgres_data:

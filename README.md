@@ -4,33 +4,10 @@ A simple leaderboard backend API built with FastAPI and PostgreSQL.
 
 ## Quick Start
 
-1. **Install dependencies** (if not already done):
-   ```bash
-   pip install -e .
-   ```
-
-2. **Set up PostgreSQL database**:
-   
-   **Option A: Using Docker (recommended)**
-   ```bash
+Just run it with Docker Compose:
+```bash
    docker-compose up -d
-   ```
-   This will start PostgreSQL with the default credentials from `.env`
-   
-   **Option B: Using existing PostgreSQL**
-   ```sql
-   CREATE DATABASE leaderboard;
-   ```
-   Update `.env` file with your database credentials.
-
-3. **Run the server**:
-   ```bash
-   uvicorn main:app --reload
-   ```
-   Or use the PowerShell script:
-   ```powershell
-   .\run.ps1
-   ```
+```
 
 5. **Test the API**:
    - **Interactive Swagger UI:** http://localhost:8000/docs
@@ -42,49 +19,30 @@ A simple leaderboard backend API built with FastAPI and PostgreSQL.
 - **List leaderboard** - Get all users sorted by score (highest to lowest)
 - **Add users** - Register new users with initial score of 0
 - **Update scores** - Modify user scores by name
+- **Delete users** - Remove users (admin only)
 - **Get version** - Retrieve current API version
+- **API Key Authentication** - Two-tier authentication (regular + admin)
 - **Interactive API Documentation** - Full Swagger/OpenAPI documentation
 - **SQLAlchemy ORM** - Type-safe database operations
-- **Alembic Migrations** - Version-controlled database schema
+- **Alembic Migrations** - Version-controlled database schema (auto-applied on startup)
 - **PostgreSQL database** - Async connection pooling
+- **Fully Dockerized** - One-command deployment
 - **Environment Configuration** - .env file with environment variable override
 
 ## Prerequisites
 
-- Python 3.10 or higher
-- PostgreSQL database server
+- Docker and Docker Compose installed on your machine
 
 ## Installation
 
-1. Install dependencies:
-```bash
-pip install -e .
-```
+1. . Configure the app:
+   - Copy `.env.example` to `.env`
+   - Update the PostgreSQL connection settings in `.env` and API keys
 
-2. Configure the database:
-   - Copy `.env.example` to `.env` (already done)
-   - Update the PostgreSQL connection settings in `.env`:
-     ```
-     POSTGRES_HOST=localhost
-     POSTGRES_PORT=5432
-     POSTGRES_DB=leaderboard
-     POSTGRES_USER=postgres
-     POSTGRES_PASSWORD=postgres
-     ```
-
-3. Create the PostgreSQL database:
-```sql
-CREATE DATABASE leaderboard;
-```
-
-The application will automatically create the required tables on startup.
-
-## Running the Application
-
-Start the server:
-```bash
-uvicorn main:app --reload
-```
+2. Start the application:
+   ```bash
+   docker-compose up -d
+   ```
 
 The API will be available at `http://localhost:8000`
 
@@ -113,13 +71,26 @@ Features:
 **URL:** http://localhost:8000/openapi.json
 - Raw OpenAPI 3.0 JSON schema
 
-> 💡 **See [SWAGGER_DOCS.md](SWAGGER_DOCS.md) for detailed documentation guide**
-
 ## API Endpoints
+
+All endpoints except `/` and `/version` require authentication via API keys.
+
+### Authentication Headers
+
+**Regular API Key** (for most operations):
+```
+X-API-Key: your-secret-api-key-change-this
+```
+
+**Admin API Key** (for delete operations):
+```
+X-Admin-API-Key: your-admin-api-key-change-this
+```
 
 ### 1. List Leaderboard
 ```http
 GET /leaderboard
+X-API-Key: your-secret-api-key-change-this
 ```
 Returns all users ordered by score (highest to lowest).
 
@@ -139,6 +110,7 @@ Returns all users ordered by score (highest to lowest).
 ### 2. Add User
 ```http
 POST /user
+X-API-Key: your-secret-api-key-change-this
 Content-Type: application/json
 
 {
@@ -162,6 +134,7 @@ Adds a new user with an initial score of 0.
 ### 3. Update Score
 ```http
 PUT /user/score
+X-API-Key: your-secret-api-key-change-this
 Content-Type: application/json
 
 {
@@ -183,11 +156,30 @@ Updates the score for the specified user.
 }
 ```
 
-### 4. Get Version
+### 4. Delete User (Admin Only)
+```http
+DELETE /user/Alice
+X-Admin-API-Key: your-admin-api-key-change-this
+```
+Deletes a user from the leaderboard. **Requires admin API key.**
+
+**Response:**
+```json
+{
+  "message": "User deleted successfully",
+  "data": {
+    "id": 1,
+    "name": "Alice",
+    "score": 100
+  }
+}
+```
+
+### 5. Get Version
 ```http
 GET /version
 ```
-Returns the application version.
+Returns the application version. **No authentication required.**
 
 **Response:**
 ```json
@@ -215,42 +207,8 @@ Available settings:
 - `POSTGRES_DB`: Database name (default: "leaderboard")
 - `POSTGRES_USER`: Database user (default: "postgres")
 - `POSTGRES_PASSWORD`: Database password (default: "postgres")
-
-## Project Structure
-
-```
-leaderboard/
-├── main.py           # FastAPI application and endpoints
-├── config.py         # Configuration management
-├── database.py       # Database connection and table creation
-├── models.py         # Pydantic models
-├── .env              # Environment configuration (not in version control)
-├── .env.example      # Example environment configuration
-├── .gitignore        # Git ignore rules
-├── pyproject.toml    # Project dependencies
-└── README.md         # This file
-```
-
-## Development
-
-The application uses:
-- **FastAPI** - Modern web framework for building APIs
-- **SQLAlchemy 2.0** - Async ORM for database operations
-- **Alembic** - Database migration tool
-- **asyncpg** - Async PostgreSQL driver for Python
-- **psycopg2** - Sync PostgreSQL driver (for migrations)
-- **pydantic** - Data validation using Python type annotations
-- **python-dotenv** - Environment variable management
-- **uvicorn** - ASGI server
-
-### Database Migrations
-
-See [MIGRATIONS.md](MIGRATIONS.md) for detailed migration instructions.
-
-Quick commands:
-- Create migration: `alembic revision --autogenerate -m "description"`
-- Apply migrations: `alembic upgrade head`
-- Rollback: `alembic downgrade -1`
+- `API_KEY`: API key for protected endpoints
+- `ADMIN_API_KEY` API key for admin endpoints
 
 ## License
 

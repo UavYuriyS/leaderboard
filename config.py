@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     postgres_db: str = "leaderboard"
     postgres_user: str = "postgres"
     postgres_password: str = "postgres"
+    backend_port: int = 8888
 
     class Config:
         env_file = ".env"
