@@ -30,18 +30,9 @@ class AddUserRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "uid": "u-1001",
                 "name": "Alice"
             }
         }
-    )
-
-    uid: str = Field(
-        ...,
-        min_length=1,
-        max_length=255,
-        description="User unique UID (1-255 characters)",
-        examples=["u-1001", "device-abc-42"]
     )
 
     name: str = Field(
@@ -58,20 +49,12 @@ class UpdateScoreRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "uid": "u-1001",
                 "name": "Alice",
                 "score": 100
             }
         }
     )
 
-    uid: str = Field(
-        ...,
-        min_length=1,
-        max_length=255,
-        description="UID of the user to update",
-        examples=["u-1001", "device-abc-42"]
-    )
 
     name: str = Field(
         ...,

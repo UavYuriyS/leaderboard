@@ -33,24 +33,13 @@ def test_version():
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
 
-def test_add_user(uid, name):
+def test_add_user(name):
     """Test adding a user"""
-    print(f"\n=== Testing POST /user (uid: {uid}, name: {name}) ===")
+    print(f"\n=== Testing POST /user (name: {name}) ===")
     response = requests.post(
         f"{BASE_URL}/user",
-        json={"uid": uid, "name": name},
+        json={"name": name},
         headers=HEADERS
-    )
-    print(f"Status: {response.status_code}")
-    print(f"Response: {json.dumps(response.json(), indent=2)}")
-
-
-def test_login(uid, name):
-    """Test login with uid and username"""
-    print(f"\n=== Testing POST /login (uid: {uid}, name: {name}) ===")
-    response = requests.post(
-        f"{BASE_URL}/login",
-        json={"uid": uid, "name": name}
     )
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
@@ -131,10 +120,10 @@ if __name__ == "__main__":
     test_version()
 
     # Test 2: Add users (with auth)
-    test_add_user("u-1001", "Alice")
-    test_add_user("u-1002", "Bob")
-    test_add_user("u-1003", "Charlie")
-    test_add_user("u-1004", "David")  # Extra user to delete
+    test_add_user("Alice")
+    test_add_user("Bob")
+    test_add_user("Charlie")
+    test_add_user("David")  # Extra user to delete
 
     # Test 3: Update scores (with auth)
     test_update_score("Alice", 100)

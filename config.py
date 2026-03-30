@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         case_sensitive = False
         # Environment variables override .env file values
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
     @property
     def database_url(self) -> str:
