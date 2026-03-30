@@ -13,6 +13,7 @@ class LeaderboardUser(Base):
     __tablename__ = "leaderboard"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    uid: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     score: Mapped[int] = mapped_column(Integer, default=0, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

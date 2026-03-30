@@ -33,34 +33,49 @@ def test_version():
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
 
-def test_add_user(name):
+def test_add_user(uid, name):
     """Test adding a user"""
-    print(f"\n=== Testing POST /user (name: {name}) ===")
+    print(f"\n=== Testing POST /user (uid: {uid}, name: {name}) ===")
     response = requests.post(
         f"{BASE_URL}/user",
-        json={"name": name},
+        json={"uid": uid, "name": name},
         headers=HEADERS
     )
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
 
-def test_update_score(name, score):
+def test_login(uid, name):
+    """Test login with uid and username"""
+    print(f"\n=== Testing POST /login (uid: {uid}, name: {name}) ===")
+    response = requests.post(
+        f"{BASE_URL}/login",
+        json={"uid": uid, "name": name}
+    )
+    print(f"Status: {response.status_code}")
+    print(f"Response: {json.dumps(response.json(), indent=2)}")
+
+
+def test_update_score(uid, name, score):
     """Test updating a user's score"""
-    print(f"\n=== Testing PUT /user/score (name: {name}, score: {score}) ===")
+    print(f"\n=== Testing PUT /user/score (uid: {uid}, name: {name}, score: {score}) ===")
     response = requests.put(
         f"{BASE_URL}/user/score",
-        json={"name": name, "score": score},
+        json={"uid": uid, "name": name, "score": score},
         headers=HEADERS
     )
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
 
-def test_list_leaderboard():
+def test_list_leaderboard(uid):
     """Test listing the leaderboard"""
-    print("\n=== Testing GET /leaderboard ===")
-    response = requests.get(f"{BASE_URL}/leaderboard", headers=HEADERS)
+    print(f"\n=== Testing GET /leaderboard (uid: {uid}) ===")
+    response = requests.get(
+        f"{BASE_URL}/leaderboard",
+        headers=HEADERS,
+        params={"uid": uid}
+    )
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
@@ -120,36 +135,36 @@ if __name__ == "__main__":
     test_version()
 
     # Test 2: Add users (with auth)
-    test_add_user("Alice")
-    test_add_user("Bob")
-    test_add_user("Charlie")
-    test_add_user("David")  # Extra user to delete
+    test_add_user("u-1001", "Alice")
+    test_add_user("u-1002", "Bob")
+    test_add_user("u-1003", "Charlie")
+    test_add_user("u-1004", "David")  # Extra user to delete
 
     # Test 3: Update scores (with auth)
-    test_update_score("Alice", 100)
-    test_update_score("Bob", 250)
-    test_update_score("Charlie", 175)
-    test_update_score("David", 50)
+    test_update_score("u-1001", "Alice", 100)
+    test_update_score("u-1002", "Bob", 250)
+    test_update_score("u-1003", "Charlie", 175)
+    test_update_score("u-1004", "David", 50)
 
-    # Test 4: List leaderboard (should be sorted by score)
-    test_list_leaderboard()
+    # Test 5: List leaderboard (should be sorted by score)
+    test_list_leaderboard("u-1001")
 
-    # Test 5: Update Alice's score to be highest
-    test_update_score("Alice", 300)
+    # Test 6: Update Alice's score to be highest
+    test_update_score("u-1001", "Alice", 300)
 
-    # Test 6: List leaderboard again
-    test_list_leaderboard()
+    # Test 7: List leaderboard again
+    test_list_leaderboard("u-1001")
 
-    # Test 7: Try to delete with regular API key (should fail)
+    # Test 8: Try to delete with regular API key (should fail)
     test_delete_user_wrong_key("David")
 
-    # Test 8: Delete user with admin key (should succeed)
+    # Test 9: Delete user with admin key (should succeed)
     test_delete_user("David")
 
-    # Test 9: List leaderboard (David should be gone)
-    test_list_leaderboard()
+    # Test 10: List leaderboard (David should be gone)
+    test_list_leaderboard("u-1001")
 
-    # Test 10: Try to delete non-existent user
+    # Test 11: Try to delete non-existent user
     test_delete_user("NonExistent")
 
     print("\n✅ All tests completed!")

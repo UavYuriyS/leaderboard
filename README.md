@@ -16,9 +16,9 @@ Just run it with Docker Compose:
 
 ## Features
 
-- **List leaderboard** - Get all users sorted by score (highest to lowest)
+- **List leaderboard** - Get all users sorted by score (requires requester `uid`)
 - **Add users** - Register new users with initial score of 0
-- **Update scores** - Modify user scores by name
+- **Update scores** - Modify user scores by matching `uid` + name
 - **Delete users** - Remove users (admin only)
 - **Get version** - Retrieve current API version
 - **API Key Authentication** - Two-tier authentication (regular + admin)
@@ -91,14 +91,16 @@ X-Admin-API-Key: your-admin-api-key-change-this
 ```http
 GET /leaderboard
 X-API-Key: your-secret-api-key-change-this
+?uid=u-1001
 ```
-Returns all users ordered by score (highest to lowest).
+Returns all users ordered by score (highest to lowest). The `uid` must belong to an existing user.
 
 **Response:**
 ```json
 [
   {
     "id": 1,
+    "uid": "u-1001",
     "name": "Alice",
     "score": 100,
     "created_at": "2026-02-28T10:00:00",
@@ -114,6 +116,7 @@ X-API-Key: your-secret-api-key-change-this
 Content-Type: application/json
 
 {
+  "uid": "u-1001",
   "name": "Alice"
 }
 ```
@@ -125,6 +128,7 @@ Adds a new user with an initial score of 0.
   "message": "User added successfully",
   "data": {
     "id": 1,
+    "uid": "u-1001",
     "name": "Alice",
     "score": 0
   }
@@ -138,11 +142,12 @@ X-API-Key: your-secret-api-key-change-this
 Content-Type: application/json
 
 {
+  "uid": "u-1001",
   "name": "Alice",
   "score": 100
 }
 ```
-Updates the score for the specified user.
+Updates the score for the specified user only when `uid` and `name` match one record.
 
 **Response:**
 ```json
@@ -150,6 +155,7 @@ Updates the score for the specified user.
   "message": "Score updated successfully",
   "data": {
     "id": 1,
+    "uid": "u-1001",
     "name": "Alice",
     "score": 100
   }

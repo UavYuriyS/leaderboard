@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, status, Depends
 from contextlib import asynccontextmanager
 from typing import List
 from datetime import datetime
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
@@ -46,6 +46,7 @@ app = FastAPI(
     ### Features
     * **List Leaderboard** - Get all users sorted by score
     * **Add Users** - Register new users with initial score of 0
+    * **Login** - Validate users with uid + username
     * **Update Scores** - Update user scores by name
     * **Delete Users** - Remove users (admin only)
     * **Version Info** - Get application version
@@ -160,6 +161,7 @@ async def root():
                     "example": [
                         {
                             "id": 1,
+                            "uid": "u-1001",
                             "name": "Alice",
                             "score": 300,
                             "created_at": "2026-02-28T10:00:00",
@@ -167,6 +169,7 @@ async def root():
                         },
                         {
                             "id": 2,
+                            "uid": "u-1002",
                             "name": "Bob",
                             "score": 250,
                             "created_at": "2026-02-28T10:05:00",
@@ -174,6 +177,7 @@ async def root():
                         },
                         {
                             "id": 3,
+                            "uid": "u-1003",
                             "name": "Charlie",
                             "score": 175,
                             "created_at": "2026-02-28T10:10:00",
@@ -247,8 +251,9 @@ async def list_leaderboard(
     - Timestamps are set to current time
     
     **Constraints:**
+    - User UID must be unique
     - Username must be unique
-    - Username must be 1-255 characters
+    - User UID and username must be 1-255 characters
     
     **Returns:**
     Confirmation message with user details.
@@ -262,6 +267,7 @@ async def list_leaderboard(
                         "message": "User added successfully",
                         "data": {
                             "id": 1,
+                            "uid": "u-1001",
                             "name": "Alice",
                             "score": 0
                         }
@@ -294,7 +300,7 @@ async def list_leaderboard(
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": "User with name 'Alice' already exists"
+                        "detail": "User with uid 'u-1001' already exists"
                     }
                 }
             }
@@ -329,18 +335,28 @@ async def add_user(
     try:
         # Check if user already exists
         result = await session.execute(
-            select(LeaderboardUser).where(LeaderboardUser.name == request.name)
+            select(LeaderboardUser).where(
+                or_(
+                    LeaderboardUser.uid == request.uid,
+                    LeaderboardUser.name == request.name,
+                )
+            )
         )
         existing = result.scalar_one_or_none()
 
         if existing:
+            if existing.uid == request.uid:
+                detail = f"User with uid '{request.uid}' already exists"
+            else:
+                detail = f"User with name '{request.name}' already exists"
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"User with name '{request.name}' already exists"
+                detail=detail
             )
 
         # Create new user
         new_user = LeaderboardUser(
+            uid=request.uid,
             name=request.name,
             score=0,
             created_at=datetime.utcnow(),
@@ -355,6 +371,7 @@ async def add_user(
             message="User added successfully",
             data={
                 "id": new_user.id,
+                "uid": new_user.uid,
                 "name": new_user.name,
                 "score": new_user.score
             }
@@ -375,7 +392,7 @@ async def add_user(
     tags=["users"],
     summary="Update user score",
     description="""
-    Updates the score for an existing user identified by name.
+    Updates the score for an existing user identified by both uid and name.
     
     **Authentication Required:** API Key via `X-API-Key` header
     
@@ -384,7 +401,7 @@ async def add_user(
     - `updated_at` timestamp is updated automatically
     
     **Requirements:**
-    - User must exist in the leaderboard
+    - User `uid` and `name` must match the same leaderboard user
     - Score must be non-negative (≥ 0)
     
     **Returns:**
@@ -399,6 +416,7 @@ async def add_user(
                         "message": "Score updated successfully",
                         "data": {
                             "id": 1,
+                            "uid": "u-1001",
                             "name": "Alice",
                             "score": 100
                         }
@@ -431,7 +449,7 @@ async def add_user(
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": "User with name 'NonExistentUser' not found"
+                        "detail": "User with uid 'u-9999' and name 'NonExistentUser' not found"
                     }
                 }
             }
@@ -460,20 +478,23 @@ async def update_score(
     api_key: str = Depends(verify_api_key)
 ):
     """
-    Update the score of a user by name
+    Update the score of a user by uid and name
     """
     # ...existing code...
     try:
         # Find the user
         result = await session.execute(
-            select(LeaderboardUser).where(LeaderboardUser.name == request.name)
+            select(LeaderboardUser).where(
+                LeaderboardUser.uid == request.uid,
+                LeaderboardUser.name == request.name,
+            )
         )
         user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with name '{request.name}' not found"
+                detail=f"User with uid '{request.uid}' and name '{request.name}' not found"
             )
 
         # Update the score
@@ -487,6 +508,7 @@ async def update_score(
             message="Score updated successfully",
             data={
                 "id": user.id,
+                "uid": user.uid,
                 "name": user.name,
                 "score": user.score
             }
