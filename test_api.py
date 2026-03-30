@@ -56,26 +56,22 @@ def test_login(uid, name):
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
 
-def test_update_score(uid, name, score):
+def test_update_score(name, score):
     """Test updating a user's score"""
-    print(f"\n=== Testing PUT /user/score (uid: {uid}, name: {name}, score: {score}) ===")
+    print(f"\n=== Testing PUT /user/score (name: {name}, score: {score}) ===")
     response = requests.put(
         f"{BASE_URL}/user/score",
-        json={"uid": uid, "name": name, "score": score},
+        json={"name": name, "score": score},
         headers=HEADERS
     )
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
 
-def test_list_leaderboard(uid):
+def test_list_leaderboard():
     """Test listing the leaderboard"""
-    print(f"\n=== Testing GET /leaderboard (uid: {uid}) ===")
-    response = requests.get(
-        f"{BASE_URL}/leaderboard",
-        headers=HEADERS,
-        params={"uid": uid}
-    )
+    print("\n=== Testing GET /leaderboard ===")
+    response = requests.get(f"{BASE_URL}/leaderboard", headers=HEADERS)
     print(f"Status: {response.status_code}")
     print(f"Response: {json.dumps(response.json(), indent=2)}")
 
@@ -141,19 +137,19 @@ if __name__ == "__main__":
     test_add_user("u-1004", "David")  # Extra user to delete
 
     # Test 3: Update scores (with auth)
-    test_update_score("u-1001", "Alice", 100)
-    test_update_score("u-1002", "Bob", 250)
-    test_update_score("u-1003", "Charlie", 175)
-    test_update_score("u-1004", "David", 50)
+    test_update_score("Alice", 100)
+    test_update_score("Bob", 250)
+    test_update_score("Charlie", 175)
+    test_update_score("David", 50)
 
     # Test 5: List leaderboard (should be sorted by score)
-    test_list_leaderboard("u-1001")
+    test_list_leaderboard()
 
     # Test 6: Update Alice's score to be highest
-    test_update_score("u-1001", "Alice", 300)
+    test_update_score("Alice", 300)
 
     # Test 7: List leaderboard again
-    test_list_leaderboard("u-1001")
+    test_list_leaderboard()
 
     # Test 8: Try to delete with regular API key (should fail)
     test_delete_user_wrong_key("David")
@@ -162,7 +158,7 @@ if __name__ == "__main__":
     test_delete_user("David")
 
     # Test 10: List leaderboard (David should be gone)
-    test_list_leaderboard("u-1001")
+    test_list_leaderboard()
 
     # Test 11: Try to delete non-existent user
     test_delete_user("NonExistent")

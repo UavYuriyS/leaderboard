@@ -16,7 +16,7 @@ Just run it with Docker Compose:
 
 ## Features
 
-- **List leaderboard** - Get all users sorted by score (requires requester `uid`)
+- **List leaderboard** - Get all users sorted by score (highest to lowest)
 - **Add users** - Register new users with initial score of 0
 - **Update scores** - Modify user scores by matching `uid` + name
 - **Delete users** - Remove users (admin only)
@@ -147,7 +147,7 @@ Content-Type: application/json
   "score": 100
 }
 ```
-Updates the score for the specified user only when `uid` and `name` match one record.
+Updates the score for the specified user.
 
 **Response:**
 ```json

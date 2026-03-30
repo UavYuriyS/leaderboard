@@ -392,7 +392,7 @@ async def add_user(
     tags=["users"],
     summary="Update user score",
     description="""
-    Updates the score for an existing user identified by both uid and name.
+    Updates the score for an existing user identified by name.
     
     **Authentication Required:** API Key via `X-API-Key` header
     
@@ -401,7 +401,7 @@ async def add_user(
     - `updated_at` timestamp is updated automatically
     
     **Requirements:**
-    - User `uid` and `name` must match the same leaderboard user
+    - User must exist in the leaderboard
     - Score must be non-negative (≥ 0)
     
     **Returns:**
@@ -416,7 +416,6 @@ async def add_user(
                         "message": "Score updated successfully",
                         "data": {
                             "id": 1,
-                            "uid": "u-1001",
                             "name": "Alice",
                             "score": 100
                         }
@@ -449,7 +448,7 @@ async def add_user(
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": "User with uid 'u-9999' and name 'NonExistentUser' not found"
+                        "detail": "User with name 'NonExistentUser' not found"
                     }
                 }
             }
@@ -478,23 +477,20 @@ async def update_score(
     api_key: str = Depends(verify_api_key)
 ):
     """
-    Update the score of a user by uid and name
+    Update the score of a user by name
     """
     # ...existing code...
     try:
         # Find the user
         result = await session.execute(
-            select(LeaderboardUser).where(
-                LeaderboardUser.uid == request.uid,
-                LeaderboardUser.name == request.name,
-            )
+            select(LeaderboardUser).where(LeaderboardUser.name == request.name)
         )
         user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with uid '{request.uid}' and name '{request.name}' not found"
+                detail=f"User with name '{request.name}' not found"
             )
 
         # Update the score
@@ -508,7 +504,6 @@ async def update_score(
             message="Score updated successfully",
             data={
                 "id": user.id,
-                "uid": user.uid,
                 "name": user.name,
                 "score": user.score
             }
